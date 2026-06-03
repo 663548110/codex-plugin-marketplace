@@ -1,0 +1,43 @@
+{
+  "name": "rdesign-cli",
+  "version": "0.1.0",
+  "description": "Use the RDesign CLI to inspect component docs, runtime source, examples, token-core values, and PR scope boundaries.",
+  "author": {
+    "name": "HuanlongAI",
+    "email": "663548110@qq.com",
+    "url": "https://github.com/huanlongAI"
+  },
+  "homepage": "https://github.com/huanlongAI/hl-scene-design-system",
+  "repository": "https://github.com/huanlongAI/hl-scene-design-system",
+  "license": "UNLICENSED",
+  "keywords": [
+    "rdesign",
+    "design-system",
+    "cli",
+    "flutter",
+    "uniapp",
+    "tokens"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "RDesign CLI",
+    "shortDescription": "Inspect RDesign components, docs, tokens, and scope",
+    "longDescription": "RDesign CLI gives agents a read-only workflow for hl-scene-design-system: list components, fetch Flutter or UniApp docs/source/examples by runtime, query token-core values, and check PR scope boundaries before editing.",
+    "developerName": "HuanlongAI",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Interactive"
+    ],
+    "websiteURL": "https://github.com/huanlongAI/hl-scene-design-system",
+    "privacyPolicyURL": "https://github.com/huanlongAI/hl-scene-design-system",
+    "termsOfServiceURL": "https://github.com/huanlongAI/hl-scene-design-system",
+    "defaultPrompt": [
+      "Use rdesign-cli to inspect this design-system component.",
+      "Query RDesign token-core and component parity.",
+      "Check whether this design-system PR scope is clean."
+    ],
+    "brandColor": "#4830E7",
+    "screenshots": []
+  }
+}
