@@ -1,6 +1,6 @@
 ---
 name: rdesign-cli
-description: Use when working in hl-scene-design-system and needing fast, read-only facts about the design system CLI, component docs, component source, runtime examples, token-core values, or PR scope boundaries. Trigger before manually scanning Flutter/UniApp component files, token JSON, docs/design-system, or PARITY-MATRIX.md.
+description: 在 hl-scene-design-system 中工作，需要快速获取设计系统 CLI、组件文档、组件源码、运行时示例、token-core 值或 PR 变更范围边界时使用。手动扫描 Flutter/UniApp 组件文件、token JSON、docs/design-system 或 PARITY-MATRIX.md 之前先触发。
 ---
 
 # RDesign CLI

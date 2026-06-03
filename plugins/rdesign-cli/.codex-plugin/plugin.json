@@ -1,7 +1,7 @@
 {
   "name": "rdesign-cli",
   "version": "0.1.0",
-  "description": "Use the RDesign CLI to inspect component docs, runtime source, examples, token-core values, and PR scope boundaries.",
+  "description": "使用 RDesign CLI 查看组件文档、运行时源码、示例、token-core 值和 PR 变更范围。",
   "author": {
     "name": "HuanlongAI",
     "email": "663548110@qq.com",
@@ -21,8 +21,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "RDesign CLI",
-    "shortDescription": "Inspect RDesign components, docs, tokens, and scope",
-    "longDescription": "RDesign CLI gives agents a read-only workflow for hl-scene-design-system: list components, fetch Flutter or UniApp docs/source/examples by runtime, query token-core values, and check PR scope boundaries before editing.",
+    "shortDescription": "查看 RDesign 组件、文档、Token 与变更范围",
+    "longDescription": "RDesign CLI 为智能体提供 hl-scene-design-system 的只读查询流程：列出组件，按 Flutter 或 UniApp 运行时查看文档、源码和示例，查询 token-core 值，并在编辑前检查 PR 变更范围边界。",
     "developerName": "HuanlongAI",
     "category": "Coding",
     "capabilities": [
@@ -33,9 +33,9 @@
     "privacyPolicyURL": "https://github.com/huanlongAI/hl-scene-design-system",
     "termsOfServiceURL": "https://github.com/huanlongAI/hl-scene-design-system",
     "defaultPrompt": [
-      "Use rdesign-cli to inspect this design-system component.",
-      "Query RDesign token-core and component parity.",
-      "Check whether this design-system PR scope is clean."
+      "用 rdesign-cli 查看这个设计系统组件。",
+      "查询 RDesign token-core 与组件双端对齐情况。",
+      "检查这个设计系统 PR 的变更范围是否干净。"
     ],
     "brandColor": "#4830E7",
     "screenshots": []
