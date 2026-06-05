@@ -1,6 +1,6 @@
 {
   "name": "rdesign-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "使用 RDesign CLI 查看组件文档、运行时源码、示例、token-core 值和 PR 变更范围。",
   "author": {
     "name": "HuanlongAI",
