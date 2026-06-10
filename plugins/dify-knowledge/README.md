@@ -6,6 +6,7 @@ This plugin bundles:
 
 - `skills/dify-kb-maintainer/SKILL.md`: Codex workflow guidance for Dify knowledge base tasks.
 - `skills/dify-kb-maintainer/scripts/dify_kb.py`: a standard-library Python helper for Dify Knowledge API calls.
+- `skills/dify-kb-maintainer/scripts/git_project_ingest.py`: a reusable Git project ingestion pipeline that generates project knowledge cards and can write them to Dify.
 - Reference notes for local stack checks and Dify Knowledge API endpoints.
 - `assets/dify-logo.png`: square Dify logo asset with a white background, used as the plugin logo and composer icon.
 
@@ -47,6 +48,28 @@ python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py crea
 python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py create-text-document <dataset_id> "项目说明" "项目内容..."
 python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py list-documents <dataset_id>
 python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "怎么启动这个项目？"
+```
+
+## Git Project Ingestion Pipeline
+
+Generate the seven standard project knowledge cards without writing to Dify:
+
+```sh
+python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/git_project_ingest.py \
+  --mode dry_run \
+  --repo-url https://github.com/pallets/flask.git \
+  --repo-ref main \
+  --project-key github/pallets-flask
+```
+
+Write to the default `项目信息库` only after reviewing the dry-run JSON:
+
+```sh
+python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/git_project_ingest.py \
+  --mode create \
+  --repo-url <git_repo_url> \
+  --repo-ref <branch_or_tag_or_sha> \
+  --project-key <stable_project_key>
 ```
 
 Key priority is: `--api-key`, `DIFY_API_KEY`, `config.local.json`, then the built-in LAN default.
