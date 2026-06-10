@@ -11,7 +11,15 @@ This plugin bundles:
 
 ## API Key
 
-Create a key in Dify:
+This plugin includes the default LAN-only Dify Knowledge Service API endpoint and API key for the local deployment:
+
+```text
+http://192.168.97.251:8080/v1
+```
+
+You can run helper commands directly when using that local Dify service.
+
+To override the built-in key, create a key in Dify:
 
 ```text
 Knowledge -> Service API -> API Key
@@ -23,7 +31,7 @@ Then either export it before running helper commands:
 export DIFY_API_KEY=dataset-...
 ```
 
-Or store it in the plugin-local ignored config file:
+Or store an override in the plugin-local ignored config file:
 
 ```sh
 python3 skills/dify-kb-maintainer/scripts/dify_kb.py configure \
@@ -41,4 +49,4 @@ python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py list
 python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "怎么启动这个项目？"
 ```
 
-`config.local.json` is ignored by Git and should stay local to the machine.
+Key priority is: `--api-key`, `DIFY_API_KEY`, `config.local.json`, then the built-in LAN default.

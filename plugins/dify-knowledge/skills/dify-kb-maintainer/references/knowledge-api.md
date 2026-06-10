@@ -1,6 +1,12 @@
 # Dify Knowledge API
 
-Set:
+The plugin has a built-in LAN default:
+
+```text
+http://192.168.97.251:8080/v1
+```
+
+Override it when needed:
 
 ```sh
 export DIFY_BASE_URL=http://192.168.97.251:8080/v1
@@ -13,10 +19,10 @@ Or store local settings next to the helper script:
 python3 scripts/dify_kb.py configure --api-key dataset-... --base-url http://192.168.97.251:8080/v1
 ```
 
-All requests need:
+All requests use:
 
 ```text
-Authorization: Bearer $DIFY_API_KEY
+Authorization: Bearer <api_key>
 ```
 
 Create or get a key in Dify UI:

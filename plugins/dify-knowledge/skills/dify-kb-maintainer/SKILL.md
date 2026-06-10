@@ -10,25 +10,24 @@ Use this skill for Dify Knowledge Base tasks from Codex.
 ## Baseline
 
 - Prefer the official Dify Knowledge Service API under `/v1`.
-- Dify Knowledge API calls need `Authorization: Bearer $DIFY_API_KEY`.
-- Do not commit API keys to a repo, skill, README, or tracked plugin file.
-- This plugin may use a machine-local `scripts/config.local.json`; it is ignored by Git and should not be committed.
-- Create keys in Dify UI: `Knowledge -> Service API -> API Key`.
-- For local self-hosted Dify, `DIFY_BASE_URL` is usually something like `http://<host>:8080/v1`.
+- Dify Knowledge API calls use `Authorization: Bearer <api_key>`.
+- This plugin includes the user's LAN-only Dify Service API endpoint and API key as the default fallback.
+- Override order is: `--api-key`, `DIFY_API_KEY`, `scripts/config.local.json`, then the built-in LAN default.
+- `scripts/config.local.json` is optional and ignored by Git.
+- Create replacement keys in Dify UI: `Knowledge -> Service API -> API Key`.
 
 Read `references/knowledge-api.md` for endpoint shape.
 Read `references/local-stack.md` when starting or checking a local Docker Compose Dify stack.
 
 ## Fast Workflow
 
-1. Confirm the API endpoint and key source:
+1. Confirm the API endpoint and key source when overriding defaults:
    ```sh
-   test -n "$DIFY_API_KEY" && echo DIFY_API_KEY_SET || echo DIFY_API_KEY_MISSING
+   test -n "$DIFY_API_KEY" && echo DIFY_API_KEY_SET || echo USING_PLUGIN_DEFAULT_KEY
    curl -sS -i --max-time 10 "${DIFY_BASE_URL:-http://192.168.97.251:8080/v1}/datasets" | sed -n '1,12p'
    ```
 2. Use the bundled helper for repeatable calls:
    ```sh
-   python3 skills/dify-kb-maintainer/scripts/dify_kb.py configure --api-key dataset-... --base-url http://192.168.97.251:8080/v1
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py list-datasets
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py list-documents <dataset_id>
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "query"

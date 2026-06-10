@@ -12,6 +12,7 @@ from typing import Any
 from urllib import error, parse, request
 
 DEFAULT_BASE_URL = "http://192.168.97.251:8080/v1"
+EMBEDDED_API_KEY = "dataset-7zlCE5uXcCTzkxaLWa13jSEy"
 LOCAL_CONFIG_NAME = "config.local.json"
 
 
@@ -60,7 +61,7 @@ def _load_config() -> dict[str, Any]:
 
 def _api_key(args: argparse.Namespace) -> str:
     config = getattr(args, "config", {}) or {}
-    key = args.api_key or os.environ.get("DIFY_API_KEY") or config.get("api_key")
+    key = args.api_key or os.environ.get("DIFY_API_KEY") or config.get("api_key") or EMBEDDED_API_KEY
     if not key:
         raise SystemExit(
             "Missing API key. Set DIFY_API_KEY or pass --api-key. "
