@@ -19,6 +19,8 @@ Codex-supported plugin marketplace for local agent plugins.
     └── dify-knowledge/
         ├── .codex-plugin/
         │   └── plugin.json
+        ├── assets/
+        │   └── dify-logo.svg
         ├── README.md
         └── skills/
             └── dify-kb-maintainer/
