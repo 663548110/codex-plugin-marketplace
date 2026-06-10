@@ -32,18 +32,9 @@ Read `references/local-stack.md` when starting or checking a local Docker Compos
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py list-documents <dataset_id>
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "query"
    ```
-3. For Git project ingestion into `项目信息库`, first run dry-run and inspect JSON:
-   ```sh
-   python3 skills/dify-kb-maintainer/scripts/git_project_ingest.py \
-     --mode dry_run \
-     --repo-url <git_repo_url> \
-     --repo-ref <branch_or_tag_or_sha> \
-     --project-key <stable_project_key>
-   ```
-4. Use `--mode create` only after reviewing the seven generated cards. Use `--mode update` to create a new version without deleting old documents.
-5. If running from outside this skill folder, use the absolute script path from the installed plugin cache or repository checkout.
-6. For the first API key, use the Dify browser UI rather than direct database edits.
-7. For workflow DSL generation, use a dedicated Dify workflow builder skill if one is installed.
+3. If running from outside this skill folder, use the absolute script path from the installed plugin cache or repository checkout.
+4. For the first API key, use the Dify browser UI rather than direct database edits.
+5. For workflow DSL generation, use a dedicated Dify workflow builder skill if one is installed.
 
 ## Safety
 
