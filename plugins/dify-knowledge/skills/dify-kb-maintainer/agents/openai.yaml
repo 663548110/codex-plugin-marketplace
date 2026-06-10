@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dify KB Maintainer"
+  short_description: "Maintain local Dify knowledge bases."
+  default_prompt: "Use this skill to inspect, troubleshoot, and maintain Dify knowledge base workflows."
