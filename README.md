@@ -20,6 +20,7 @@ Codex-supported plugin marketplace for local agent plugins.
         ├── .codex-plugin/
         │   └── plugin.json
         ├── assets/
+        │   ├── dify-logo.png
         │   └── dify-logo.svg
         ├── README.md
         └── skills/

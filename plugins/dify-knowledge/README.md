@@ -7,7 +7,7 @@ This plugin bundles:
 - `skills/dify-kb-maintainer/SKILL.md`: Codex workflow guidance for Dify knowledge base tasks.
 - `skills/dify-kb-maintainer/scripts/dify_kb.py`: a standard-library Python helper for Dify Knowledge API calls.
 - Reference notes for local stack checks and Dify Knowledge API endpoints.
-- `assets/dify-logo.svg`: Dify logo asset used as the plugin logo and composer icon.
+- `assets/dify-logo.png`: square Dify logo asset with a white background, used as the plugin logo and composer icon.
 
 ## API Key
 
