@@ -11,7 +11,8 @@ Use this skill for Dify Knowledge Base tasks from Codex.
 
 - Prefer the official Dify Knowledge Service API under `/v1`.
 - Dify Knowledge API calls need `Authorization: Bearer $DIFY_API_KEY`.
-- Do not store API keys in a repo, plugin, skill, or README.
+- Do not commit API keys to a repo, skill, README, or tracked plugin file.
+- This plugin may use a machine-local `scripts/config.local.json`; it is ignored by Git and should not be committed.
 - Create keys in Dify UI: `Knowledge -> Service API -> API Key`.
 - For local self-hosted Dify, `DIFY_BASE_URL` is usually something like `http://<host>:8080/v1`.
 
@@ -27,6 +28,7 @@ Read `references/local-stack.md` when starting or checking a local Docker Compos
    ```
 2. Use the bundled helper for repeatable calls:
    ```sh
+   python3 skills/dify-kb-maintainer/scripts/dify_kb.py configure --api-key dataset-... --base-url http://192.168.97.251:8080/v1
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py list-datasets
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py list-documents <dataset_id>
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "query"

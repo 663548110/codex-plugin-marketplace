@@ -12,6 +12,7 @@ from typing import Any
 from urllib import error, parse, request
 
 DEFAULT_BASE_URL = "http://192.168.97.251:8080/v1"
+LOCAL_CONFIG_NAME = "config.local.json"
 
 
 def _redact(value: str) -> str:
@@ -27,12 +28,44 @@ def _api_url(base_url: str, path: str, params: dict[str, Any] | None = None) -> 
     return url
 
 
+def _script_config_path() -> Path:
+    return Path(__file__).resolve().parent / LOCAL_CONFIG_NAME
+
+
+def _user_config_path() -> Path:
+    return Path.home() / ".config" / "dify-knowledge" / "config.json"
+
+
+def _config_paths() -> list[Path]:
+    configured_path = os.environ.get("DIFY_KB_CONFIG")
+    if configured_path:
+        return [Path(configured_path).expanduser()]
+    return [_script_config_path(), _user_config_path()]
+
+
+def _load_config() -> dict[str, Any]:
+    for path in _config_paths():
+        if not path.is_file():
+            continue
+        try:
+            config = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"Invalid Dify config JSON: {path}: {exc}") from exc
+        if not isinstance(config, dict):
+            raise SystemExit(f"Invalid Dify config JSON: {path}: root must be an object")
+        config["_path"] = str(path)
+        return config
+    return {}
+
+
 def _api_key(args: argparse.Namespace) -> str:
-    key = args.api_key or os.environ.get("DIFY_API_KEY")
+    config = getattr(args, "config", {}) or {}
+    key = args.api_key or os.environ.get("DIFY_API_KEY") or config.get("api_key")
     if not key:
         raise SystemExit(
             "Missing API key. Set DIFY_API_KEY or pass --api-key. "
-            "Create it in Dify: Knowledge -> Service API -> API Key."
+            "Or run `dify_kb.py configure --api-key ...`. "
+            "Create keys in Dify: Knowledge -> Service API -> API Key."
         )
     return key
 
@@ -121,6 +154,35 @@ def _multipart_body(fields: dict[str, str], file_field: str, file_path: Path) ->
         ]
     )
     return b"".join(lines), boundary
+
+
+def _cmd_configure(args: argparse.Namespace) -> Any:
+    path = Path(args.config_path).expanduser() if args.config_path else _script_config_path()
+    config: dict[str, Any] = {}
+    if path.exists():
+        try:
+            current = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"Invalid existing config JSON: {path}: {exc}") from exc
+        if isinstance(current, dict):
+            config.update(current)
+
+    if args.local_api_key:
+        config["api_key"] = args.local_api_key
+    if args.local_base_url:
+        config["base_url"] = args.local_base_url
+
+    if not config.get("api_key"):
+        raise SystemExit("Missing --api-key for local config.")
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path.chmod(0o600)
+    return {
+        "config_path": str(path),
+        "base_url": config.get("base_url", DEFAULT_BASE_URL),
+        "api_key": _redact(str(config["api_key"])),
+    }
 
 
 def _cmd_list_datasets(args: argparse.Namespace) -> Any:
@@ -214,11 +276,24 @@ def _cmd_upload_file(args: argparse.Namespace) -> Any:
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    config = _load_config()
+    default_base_url = os.environ.get("DIFY_BASE_URL") or config.get("base_url") or DEFAULT_BASE_URL
     parser = argparse.ArgumentParser(description="Dify Knowledge Service API helper.")
-    parser.add_argument("--base-url", default=os.environ.get("DIFY_BASE_URL", DEFAULT_BASE_URL))
+    parser.add_argument("--base-url", default=default_base_url)
     parser.add_argument("--api-key", default=None)
     parser.add_argument("--timeout", type=int, default=30)
+    parser.set_defaults(config=config)
     sub = parser.add_subparsers(dest="command", required=True)
+
+    configure = sub.add_parser("configure", help="Store local API settings in an ignored config file.")
+    configure.add_argument("--api-key", dest="local_api_key", required=True)
+    configure.add_argument("--base-url", dest="local_base_url", default=default_base_url)
+    configure.add_argument(
+        "--config-path",
+        default=None,
+        help=f"Defaults to the script-local {LOCAL_CONFIG_NAME}.",
+    )
+    configure.set_defaults(func=_cmd_configure)
 
     list_datasets = sub.add_parser("list-datasets", help="List knowledge bases.")
     list_datasets.add_argument("--page", type=int, default=1)

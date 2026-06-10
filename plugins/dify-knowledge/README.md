@@ -17,16 +17,18 @@ Create a key in Dify:
 Knowledge -> Service API -> API Key
 ```
 
-Then export it before running helper commands:
+Then either export it before running helper commands:
 
 ```sh
 export DIFY_API_KEY=dataset-...
 ```
 
-Optional base URL:
+Or store it in the plugin-local ignored config file:
 
 ```sh
-export DIFY_BASE_URL=http://192.168.97.251:8080/v1
+python3 skills/dify-kb-maintainer/scripts/dify_kb.py configure \
+  --api-key dataset-... \
+  --base-url http://192.168.97.251:8080/v1
 ```
 
 ## Commands
@@ -39,4 +41,4 @@ python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py list
 python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "怎么启动这个项目？"
 ```
 
-The helper never stores API keys. Pass keys through `DIFY_API_KEY` or `--api-key`.
+`config.local.json` is ignored by Git and should stay local to the machine.

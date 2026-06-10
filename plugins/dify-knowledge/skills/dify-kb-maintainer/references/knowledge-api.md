@@ -7,6 +7,12 @@ export DIFY_BASE_URL=http://192.168.97.251:8080/v1
 export DIFY_API_KEY=dataset-...
 ```
 
+Or store local settings next to the helper script:
+
+```sh
+python3 scripts/dify_kb.py configure --api-key dataset-... --base-url http://192.168.97.251:8080/v1
+```
+
 All requests need:
 
 ```text

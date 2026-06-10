@@ -42,11 +42,19 @@ Codex-supported plugin marketplace for local agent plugins.
 Knowledge -> Service API -> API Key
 ```
 
-Then set:
+Then either set environment variables:
 
 ```sh
 export DIFY_API_KEY=dataset-...
 export DIFY_BASE_URL=http://192.168.97.251:8080/v1
+```
+
+Or write a machine-local ignored config file:
+
+```sh
+python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py configure \
+  --api-key dataset-... \
+  --base-url http://192.168.97.251:8080/v1
 ```
 
 ## Local Install
