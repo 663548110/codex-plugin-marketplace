@@ -74,7 +74,7 @@ Read `references/local-stack.md` when starting or checking a local Docker Compos
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "query" --project-key <project_key>
    ```
 3. The helper defaults to `hybrid_search` with `top_k=12` and weighted-score reranking, which matches the primary high-quality project-memory knowledge base. Use `--search-method keyword_search` only for economy-index smoke tests, and `--no-weighted-score` only for raw retrieval debugging.
-4. For project-context questions, use natural queries and pass `--project-key <project_key>` whenever document metadata is available. The helper will filter by `doc_metadata.project_key`, expand the query with the matching project-card topic, and client-rerank the returned cards so similar projects and adjacent topics do not compete.
+4. For project-context questions, use natural queries and pass `--project-key <project_key>` whenever document metadata is available. The helper will filter by `doc_metadata.project_key`, expand the query with the matching project-memory card specification, and client-rerank the returned cards so similar projects and adjacent topics do not compete.
 5. Good recall prompts should stay natural, for example `本地怎么跑起来`, `接口封装在哪里`, or `每个环境的接口地址是什么`. Avoid overfitting recall tests with too many exact table/field names unless debugging a specific miss.
 6. Inspect returned records before answering: document name, segment position, content, score if present, and whether the content contains the intended project key.
 7. In answers, state which project/card/segment the answer came from. If recall is weak, mixed across projects, stale, or missing, say so and either retry with a better query or verify in source code.
@@ -83,6 +83,7 @@ Read `references/local-stack.md` when starting or checking a local Docker Compos
 ## Maintenance Workflow
 
 - For document health, check: completed/enabled document, `doc_metadata.project_key`, 9 parent segments, no `---CARD---` delimiter leaks, and retrieval hits for the major project topics above.
+- Treat client-side project-card reranking as a consumption safeguard, not the source of truth. Long-term quality should come from schema-driven project cards that include `检索锚点` and `本卡回答范围` in each parent segment.
 - For Dify workflow/pipeline repair, prefer Service API and UI operations first. Avoid direct database edits unless the user explicitly asks for database-level repair or there is no safer route.
 - For the first API key or key replacement, use the Dify browser UI rather than direct database edits.
 - For workflow DSL generation, use a dedicated Dify workflow builder skill if one is installed.

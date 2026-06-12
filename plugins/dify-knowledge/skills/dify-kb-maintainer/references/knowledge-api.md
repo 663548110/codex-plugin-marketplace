@@ -81,6 +81,6 @@ For the primary project-memory knowledge base, prefer hybrid retrieval with weig
 }
 ```
 
-The helper also applies project-card topic expansion and client-side card ordering when `--project-key` is used. This is intentionally scoped to the primary project-memory knowledge base shape: one healthy project document contains nine parent cards from project overview through endpoint index.
+The helper also applies schema-based project-card topic expansion and client-side card ordering when `--project-key` is used. This is intentionally scoped to the primary project-memory knowledge base shape: one healthy project document contains nine parent cards from project overview through endpoint index. It is a consumption safeguard; the durable fix is for the Knowledge Pipeline to generate cards with stable anchors and answer scopes.
 
 Use `keyword_search` with `economy` datasets for simple no-embedding smoke tests.

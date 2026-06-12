@@ -49,6 +49,6 @@ python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py list
 python3 plugins/dify-knowledge/skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "这个项目怎么启动？" --project-key <project_key>
 ```
 
-Retrieval defaults to hybrid search with `top_k=12` and Dify weighted-score reranking, which is a better fit for high-quality project-memory knowledge bases. When `--project-key` is provided, the helper adds project metadata filtering and project-card topic boosting so vague questions like "这个项目怎么启动？" or "接口地址在哪？" still land on the right card. Pass `--search-method keyword_search` for economy-index smoke tests, or `--no-weighted-score` for raw debugging.
+Retrieval defaults to hybrid search with `top_k=12` and Dify weighted-score reranking, which is a better fit for high-quality project-memory knowledge bases. When `--project-key` is provided, the helper adds project metadata filtering and schema-based project-card topic boosting so vague questions like "这个项目怎么启动？" or "接口地址在哪？" still land on the right card. The topic boost is based on the stable 9-card project-memory specification, not individual failed-query patches. Pass `--search-method keyword_search` for economy-index smoke tests, or `--no-weighted-score` for raw debugging.
 
 Key priority is: `--api-key`, `DIFY_API_KEY`, `config.local.json`, then the built-in LAN default.

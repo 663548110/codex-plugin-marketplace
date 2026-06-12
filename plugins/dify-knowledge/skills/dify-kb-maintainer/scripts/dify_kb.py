@@ -5,6 +5,7 @@ import argparse
 import json
 import mimetypes
 import os
+import re
 import sys
 import uuid
 from pathlib import Path
@@ -19,74 +20,101 @@ DEFAULT_TOP_K = 12
 DEFAULT_EMBEDDING_PROVIDER = "langgenius/openai/openai"
 DEFAULT_EMBEDDING_MODEL = "text-embedding-3-large"
 
-PROJECT_MEMORY_TOPICS: list[dict[str, Any]] = [
+PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
     {
         "id": "project",
         "position": 1,
-        "terms": ["是什么项目", "项目是干嘛", "项目干嘛", "项目定位", "业务范围", "技术栈", "从哪看", "入口"],
-        "expansion": "项目定位 技术栈 重要入口 主要业务模块 项目卡",
+        "intent_signals": ["是什么项目", "项目是干嘛", "项目干嘛", "项目定位", "业务范围", "技术栈", "从哪看", "入口"],
+        "expansion": "项目定位 技术栈 运行形态 重要入口 主要业务模块 项目卡",
     },
     {
         "id": "startup",
         "position": 2,
-        "terms": ["启动", "跑起来", "本地", "安装", "构建", "测试", "lint", "typecheck", "dev", "build"],
+        "intent_signals": ["启动", "跑起来", "本地", "安装", "构建", "测试", "lint", "typecheck", "dev server", "build"],
         "expansion": "启动构建测试 install dev build test lint typecheck 端口",
     },
     {
         "id": "auth",
         "position": 3,
-        "terms": ["登录", "权限", "token", "currentuser", "用户信息", "菜单权限", "按钮权限", "auth", "permission", "access"],
+        "intent_signals": ["登录", "权限", "token", "currentuser", "用户信息", "菜单权限", "按钮权限", "auth", "permission", "access"],
         "expansion": "权限与登录 login token currentUser auth storage route permission button permission",
     },
     {
         "id": "routes",
         "position": 4,
-        "terms": ["路由", "页面", "业务模块", "模块组织", "菜单", "入口页面", "router", "routes", "pages", "layout"],
+        "intent_signals": ["路由", "页面", "业务模块", "模块组织", "菜单", "入口页面", "默认首页", "tabbar", "router", "routes", "pages", "layout"],
         "expansion": "路由与业务模块 router routes pages layout 页面入口 业务模块",
     },
     {
         "id": "request",
         "position": 5,
-        "terms": ["请求封装", "后端响应", "响应处理", "错误处理", "拦截器", "proxy", "baseurl", "request wrapper", "http"],
-        "expansion": "API 与请求处理 请求封装 baseURL proxy response envelope error handling interceptor",
+        "intent_signals": [
+            "请求封装",
+            "请求库",
+            "后端响应",
+            "响应处理",
+            "返回报错",
+            "统一处理",
+            "错误处理",
+            "错误码",
+            "状态码",
+            "401",
+            "403",
+            "header",
+            "请求头",
+            "拦截器",
+            "proxy",
+            "baseurl",
+            "base url",
+            "request wrapper",
+            "http",
+        ],
+        "expansion": "API 与请求处理 请求封装 请求库 拦截器 baseURL proxy header response status code 401 403 error handling interceptor",
     },
     {
         "id": "business_api",
         "position": 6,
-        "terms": ["业务接口", "业务 api", "api 模块", "接口模块", "新接口", "分页", "crud", "services", "service"],
+        "intent_signals": ["业务接口", "业务 api", "api 模块", "接口模块", "新接口", "分页", "crud", "services", "service"],
         "expansion": "业务 API 模块 services 业务接口 endpoint 前缀 CRUD 分页",
     },
     {
         "id": "maintenance",
         "position": 7,
-        "terms": ["维护", "注意", "约定", "常见坑", "不要手改", "生成代码", "agents", "claude", "skill"],
+        "intent_signals": ["维护", "注意", "约定", "常见坑", "不要手改", "生成代码", "复核", "agents", "claude", "skill"],
         "expansion": "项目技能与维护约定 AGENTS CLAUDE skills 生成代码边界 commit lint test 常见维护注意事项",
     },
     {
         "id": "environment",
         "position": 8,
-        "terms": [
+        "intent_signals": [
             "环境",
             "接口地址",
             "api base url",
             "api_base_url",
             "base url",
+            "baseurl",
             "域名",
             "envkey",
+            "env",
+            "dev test prod",
             "env.dev",
             "env.test",
             "env.prod",
             "开发",
             "测试环境",
             "生产",
+            "appid",
+            "brand",
+            "manifest",
+            "常量",
         ],
-        "expansion": "环境配置与常量 接口地址 不同环境请求哪里配 每个环境 api base url API_BASE_URL baseURL env.dev env.test env.prod 域名 envKey",
+        "expansion": "环境配置与常量 接口地址 不同环境请求哪里配 每个环境 api base url API_BASE_URL baseURL env dev test prod env.dev env.test env.prod 域名 envKey appid brand manifest 常量",
     },
     {
         "id": "endpoint_index",
         "position": 9,
-        "terms": ["接口清单", "接口端点", "端点", "endpoint", "接口索引", "文件索引", "method", "path"],
-        "expansion": "接口端点与关键文件索引 endpoint path method source file 页面调用",
+        "intent_signals": ["接口清单", "接口端点", "接口名", "反查", "哪个页面调用", "端点", "endpoint", "接口索引", "文件索引", "method", "path", "调用链"],
+        "expansion": "接口端点与关键文件索引 接口名反查 endpoint path method source file 页面调用 调用链",
     },
 ]
 
@@ -309,16 +337,40 @@ def _cmd_create_text_document(args: argparse.Namespace) -> Any:
 
 def _infer_project_memory_topic(query: str) -> dict[str, Any] | None:
     normalized = query.lower()
+    if _looks_like_environment_query(normalized):
+        return _project_memory_card_spec("environment")
+    if _looks_like_endpoint_index_query(normalized):
+        return _project_memory_card_spec("endpoint_index")
+
     best: tuple[int, int, dict[str, Any] | None] = (0, 0, None)
-    for index, topic in enumerate(PROJECT_MEMORY_TOPICS):
+    for index, topic in enumerate(PROJECT_MEMORY_CARD_SPECS):
         score = 0
-        for term in topic["terms"]:
+        for term in topic["intent_signals"]:
             term_normalized = str(term).lower()
             if term_normalized in normalized:
                 score += 3 if len(term_normalized) > 2 else 1
         if score > best[0]:
             best = (score, -index, topic)
     return best[2] if best[0] > 0 else None
+
+
+def _project_memory_card_spec(card_id: str) -> dict[str, Any] | None:
+    return next((spec for spec in PROJECT_MEMORY_CARD_SPECS if spec["id"] == card_id), None)
+
+
+def _looks_like_environment_query(normalized_query: str) -> bool:
+    environment_terms = ("api_base_url", "baseurl", "base url", "域名", "envkey", "appid", "brand", "manifest", "常量")
+    environment_count = sum(1 for term in environment_terms if term in normalized_query)
+    has_env_series = bool(re.search(r"\bdev\b.*\btest\b.*\bprod\b|\btest\b.*\bprod\b", normalized_query))
+    return environment_count >= 1 and ("环境" in normalized_query or "env" in normalized_query or has_env_series)
+
+
+def _looks_like_endpoint_index_query(normalized_query: str) -> bool:
+    reverse_terms = ("接口名", "反查", "哪个页面调用", "调用链")
+    endpoint_terms = ("endpoint", "path", "method", "接口")
+    return any(term in normalized_query for term in reverse_terms) and any(
+        term in normalized_query for term in endpoint_terms
+    )
 
 
 def _expand_project_memory_query(query: str, project_key: str | None) -> tuple[str, dict[str, Any] | None]:
