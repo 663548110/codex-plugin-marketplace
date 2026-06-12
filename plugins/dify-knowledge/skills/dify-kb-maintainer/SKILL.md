@@ -52,8 +52,9 @@ Healthy documents should carry `doc_metadata.project_key`. When metadata filteri
 
 - Prefer the official Dify Knowledge Service API under `/v1`.
 - Dify Knowledge API calls use `Authorization: Bearer <api_key>`.
-- This plugin includes the user's LAN-only Dify Service API endpoint and API key as the default fallback.
-- Override order is: `--api-key`, `DIFY_API_KEY`, `scripts/config.local.json`, then the built-in LAN default.
+- This plugin includes the user's LAN-only Dify Service API endpoint and API key as a user-authorized fallback for this private environment.
+- Prefer explicit local configuration for portable use. Override order is: `--api-key`, `DIFY_API_KEY`, `scripts/config.local.json`, then the built-in LAN fallback.
+- Do not publish the built-in fallback outside the trusted private network; create a replacement key in Dify UI if the environment changes.
 - `scripts/config.local.json` is optional and ignored by Git.
 - Create replacement keys in Dify UI: `Knowledge -> Service API -> API Key`.
 
@@ -75,6 +76,7 @@ Read `references/local-stack.md` when starting or checking a local Docker Compos
    ```
 3. The helper defaults to `hybrid_search` with `top_k=12`, the configured rerank model, and a weighted-score fallback if rerank returns no candidates. Use `--search-method keyword_search` only for economy-index smoke tests, and `--no-weighted-score` only for raw retrieval debugging.
 4. For project-context questions, use natural queries and pass `--project-key <project_key>` whenever document metadata is available. The helper will filter by `doc_metadata.project_key`, expand the query with the matching project-memory card specification, and client-rerank the returned cards so similar projects and adjacent topics do not compete. Treat this as the expected Codex consumption path.
+   - The project-memory card routing specification is loaded from `data/project_memory_cards.json`, which is generated from the Codeup project-memory schema. Do not hand-edit a second Python topic list.
 5. Good recall prompts should stay natural, for example `本地怎么跑起来`, `接口封装在哪里`, or `每个环境的接口地址是什么`. Avoid overfitting recall tests with too many exact table/field names unless debugging a specific miss.
 6. Inspect returned records before answering: document name, segment position, content, score if present, and whether the content contains the intended project key.
 7. In answers, state which project/card/segment the answer came from. If recall is weak, mixed across projects, stale, or missing, say so and either retry with a better query or verify in source code.

@@ -21,119 +21,26 @@ DEFAULT_EMBEDDING_PROVIDER = "langgenius/openai/openai"
 DEFAULT_EMBEDDING_MODEL = "text-embedding-3-large"
 DEFAULT_RERANKING_PROVIDER = os.environ.get("DIFY_RERANK_PROVIDER", "langgenius/voyage/voyage")
 DEFAULT_RERANKING_MODEL = os.environ.get("DIFY_RERANK_MODEL", "rerank-2.5")
+MAX_DIFY_QUERY_LENGTH = 240
 
-PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
-    {
-        "id": "project",
-        "position": 1,
-        "intent_signals": [
-            "主要技术栈",
-            "项目入口",
-            "入口文件",
-            "是什么项目",
-            "项目是干嘛",
-            "项目干嘛",
-            "项目定位",
-            "业务范围",
-            "技术栈",
-            "从哪看",
-            "新人接手",
-            "先看什么",
-        ],
-        "expansion": "项目定位 技术栈 项目入口 入口文件 运行形态 重要入口 主要业务模块 项目卡",
-    },
-    {
-        "id": "startup",
-        "position": 2,
-        "intent_signals": ["启动", "跑起来", "跑通", "本地", "安装", "构建", "测试", "lint", "typecheck", "dev server", "build", "改完代码跑什么检查"],
-        "expansion": "启动构建测试 install dev build test lint typecheck 端口",
-    },
-    {
-        "id": "auth",
-        "position": 3,
-        "intent_signals": ["登录", "登录页面", "登录流程", "权限", "token", "currentuser", "用户信息", "菜单权限", "按钮权限", "auth", "permission", "access"],
-        "expansion": "权限与登录 登录页面 登录流程 login token currentUser auth storage route permission button permission",
-    },
-    {
-        "id": "routes",
-        "position": 4,
-        "intent_signals": ["路由", "页面", "业务模块", "模块组织", "菜单", "入口页面", "默认首页", "tabbar", "router", "routes", "pages", "layout"],
-        "expansion": "路由与业务模块 router routes pages layout 页面入口 业务模块",
-    },
-    {
-        "id": "request",
-        "position": 5,
-        "intent_signals": [
-            "请求封装",
-            "请求库",
-            "后端响应",
-            "响应处理",
-            "返回报错",
-            "统一处理",
-            "错误处理",
-            "接口报错",
-            "后端报错",
-            "错误码",
-            "状态码",
-            "401",
-            "403",
-            "header",
-            "请求头",
-            "拦截器",
-            "proxy",
-            "baseurl",
-            "base url",
-            "request wrapper",
-            "http",
-        ],
-        "expansion": "API 与请求处理 请求封装 请求库 拦截器 baseURL proxy header response status code 401 403 error handling interceptor",
-    },
-    {
-        "id": "business_api",
-        "position": 6,
-        "intent_signals": ["业务接口", "业务 api", "api 模块", "接口模块", "新接口", "分页", "crud", "services", "service"],
-        "expansion": "业务 API 模块 services 业务接口 endpoint 前缀 CRUD 分页",
-    },
-    {
-        "id": "maintenance",
-        "position": 7,
-        "intent_signals": ["维护", "注意", "约定", "常见坑", "不要手改", "生成代码", "复核", "改路由", "改接口", "pr", "知识库", "agents", "claude", "skill"],
-        "expansion": "项目技能与维护约定 AGENTS CLAUDE skills 生成代码边界 commit lint test 常见维护注意事项 改路由后要做什么 改接口后要复核什么",
-    },
-    {
-        "id": "environment",
-        "position": 8,
-        "intent_signals": [
-            "环境",
-            "接口地址",
-            "api base url",
-            "api_base_url",
-            "base url",
-            "baseurl",
-            "域名",
-            "envkey",
-            "env",
-            "dev test prod",
-            "env.dev",
-            "env.test",
-            "env.prod",
-            "开发",
-            "测试环境",
-            "生产",
-            "appid",
-            "brand",
-            "manifest",
-            "常量",
-        ],
-        "expansion": "环境配置与常量 接口地址 不同环境请求哪里配 每个环境 api base url API_BASE_URL baseURL env dev test prod env.dev env.test env.prod 域名 envKey appid brand manifest 常量",
-    },
-    {
-        "id": "endpoint_index",
-        "position": 9,
-        "intent_signals": ["某个接口", "接口在哪", "接口清单", "接口端点", "接口名", "反查", "接口路径", "只知道接口路径", "哪个页面调用", "端点", "endpoint", "接口索引", "文件索引", "method", "path", "调用链"],
-        "expansion": "接口端点与关键文件索引 某个接口在哪 接口名反查 endpoint path method source file 页面调用 调用链",
-    },
-]
+PROJECT_MEMORY_SCHEMA_PATH = Path(__file__).resolve().parent.parent / "data" / "project_memory_cards.json"
+
+
+def _load_project_memory_card_specs() -> list[dict[str, Any]]:
+    try:
+        payload = json.loads(PROJECT_MEMORY_SCHEMA_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise SystemExit(f"Missing project memory schema: {PROJECT_MEMORY_SCHEMA_PATH}") from exc
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid project memory schema: {PROJECT_MEMORY_SCHEMA_PATH}: {exc}") from exc
+
+    cards = payload.get("cards")
+    if not isinstance(cards, list):
+        raise SystemExit(f"Invalid project memory schema: {PROJECT_MEMORY_SCHEMA_PATH}: cards must be a list")
+    return [card for card in cards if isinstance(card, dict)]
+
+
+PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = _load_project_memory_card_specs()
 
 
 def _redact(value: str) -> str:
@@ -399,8 +306,13 @@ def _expand_project_memory_query(query: str, project_key: str | None) -> tuple[s
         return query, None
 
     expansion = str(topic["expansion"])
-    expanded_query = f"{project_key} {query} {expansion}"
-    return " ".join(expanded_query.split()), topic
+    parts = [project_key, query]
+    for token in expansion.split():
+        candidate = " ".join([*parts, token]).strip()
+        if len(candidate) > MAX_DIFY_QUERY_LENGTH:
+            break
+        parts.append(token)
+    return " ".join(" ".join(parts).split()), topic
 
 
 def _apply_weighted_score(payload: dict[str, Any], args: argparse.Namespace) -> None:
