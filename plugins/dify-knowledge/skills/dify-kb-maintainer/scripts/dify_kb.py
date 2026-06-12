@@ -80,8 +80,8 @@ PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
     {
         "id": "maintenance",
         "position": 7,
-        "intent_signals": ["维护", "注意", "约定", "常见坑", "不要手改", "生成代码", "复核", "agents", "claude", "skill"],
-        "expansion": "项目技能与维护约定 AGENTS CLAUDE skills 生成代码边界 commit lint test 常见维护注意事项",
+        "intent_signals": ["维护", "注意", "约定", "常见坑", "不要手改", "生成代码", "复核", "改路由", "改接口", "agents", "claude", "skill"],
+        "expansion": "项目技能与维护约定 AGENTS CLAUDE skills 生成代码边界 commit lint test 常见维护注意事项 改路由后要做什么 改接口后要复核什么",
     },
     {
         "id": "environment",
@@ -113,8 +113,8 @@ PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
     {
         "id": "endpoint_index",
         "position": 9,
-        "intent_signals": ["接口清单", "接口端点", "接口名", "反查", "哪个页面调用", "端点", "endpoint", "接口索引", "文件索引", "method", "path", "调用链"],
-        "expansion": "接口端点与关键文件索引 接口名反查 endpoint path method source file 页面调用 调用链",
+        "intent_signals": ["某个接口", "接口在哪", "接口清单", "接口端点", "接口名", "反查", "哪个页面调用", "端点", "endpoint", "接口索引", "文件索引", "method", "path", "调用链"],
+        "expansion": "接口端点与关键文件索引 某个接口在哪 接口名反查 endpoint path method source file 页面调用 调用链",
     },
 ]
 
