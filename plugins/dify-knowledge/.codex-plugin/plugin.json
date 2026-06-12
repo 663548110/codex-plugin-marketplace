@@ -1,6 +1,6 @@
 {
   "name": "dify-knowledge",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Use Dify Knowledge Base Service API from Codex with a bundled skill and CLI helper.",
   "author": {
     "name": "HuanlongAI",

@@ -71,12 +71,14 @@ Read `references/local-stack.md` when starting or checking a local Docker Compos
    ```sh
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py list-datasets
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py list-documents <dataset_id>
-   python3 skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "query"
+   python3 skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "query" --project-key <project_key>
    ```
-3. For project-context questions, use natural queries that include the intended `project_key`, for example `<project_key> 本地怎么跑起来` or `<project_key> 接口封装在哪里`. Avoid overfitting recall tests with too many exact table/field names unless debugging a specific miss.
-4. Inspect returned records before answering: document name, segment position, content, score if present, and whether the content contains the intended project key.
-5. In answers, state which project/card/segment the answer came from. If recall is weak, mixed across projects, stale, or missing, say so and either retry with a better query or verify in source code.
-6. If running from outside this skill folder, use the absolute script path from the installed plugin cache or repository checkout.
+3. The helper defaults to `hybrid_search` with `top_k=12` and weighted-score reranking, which matches the primary high-quality project-memory knowledge base. Use `--search-method keyword_search` only for economy-index smoke tests, and `--no-weighted-score` only for raw retrieval debugging.
+4. For project-context questions, use natural queries and pass `--project-key <project_key>` whenever document metadata is available. The helper will filter by `doc_metadata.project_key`, expand the query with the matching project-card topic, and client-rerank the returned cards so similar projects and adjacent topics do not compete.
+5. Good recall prompts should stay natural, for example `本地怎么跑起来`, `接口封装在哪里`, or `每个环境的接口地址是什么`. Avoid overfitting recall tests with too many exact table/field names unless debugging a specific miss.
+6. Inspect returned records before answering: document name, segment position, content, score if present, and whether the content contains the intended project key.
+7. In answers, state which project/card/segment the answer came from. If recall is weak, mixed across projects, stale, or missing, say so and either retry with a better query or verify in source code.
+8. If running from outside this skill folder, use the absolute script path from the installed plugin cache or repository checkout.
 
 ## Maintenance Workflow
 

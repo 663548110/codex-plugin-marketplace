@@ -14,6 +14,81 @@ from urllib import error, parse, request
 DEFAULT_BASE_URL = "http://192.168.97.251:8080/v1"
 EMBEDDED_API_KEY = "dataset-7zlCE5uXcCTzkxaLWa13jSEy"
 LOCAL_CONFIG_NAME = "config.local.json"
+DEFAULT_SEARCH_METHOD = "hybrid_search"
+DEFAULT_TOP_K = 12
+DEFAULT_EMBEDDING_PROVIDER = "langgenius/openai/openai"
+DEFAULT_EMBEDDING_MODEL = "text-embedding-3-large"
+
+PROJECT_MEMORY_TOPICS: list[dict[str, Any]] = [
+    {
+        "id": "project",
+        "position": 1,
+        "terms": ["是什么项目", "项目是干嘛", "项目干嘛", "项目定位", "业务范围", "技术栈", "从哪看", "入口"],
+        "expansion": "项目定位 技术栈 重要入口 主要业务模块 项目卡",
+    },
+    {
+        "id": "startup",
+        "position": 2,
+        "terms": ["启动", "跑起来", "本地", "安装", "构建", "测试", "lint", "typecheck", "dev", "build"],
+        "expansion": "启动构建测试 install dev build test lint typecheck 端口",
+    },
+    {
+        "id": "auth",
+        "position": 3,
+        "terms": ["登录", "权限", "token", "currentuser", "用户信息", "菜单权限", "按钮权限", "auth", "permission", "access"],
+        "expansion": "权限与登录 login token currentUser auth storage route permission button permission",
+    },
+    {
+        "id": "routes",
+        "position": 4,
+        "terms": ["路由", "页面", "业务模块", "模块组织", "菜单", "入口页面", "router", "routes", "pages", "layout"],
+        "expansion": "路由与业务模块 router routes pages layout 页面入口 业务模块",
+    },
+    {
+        "id": "request",
+        "position": 5,
+        "terms": ["请求封装", "后端响应", "响应处理", "错误处理", "拦截器", "proxy", "baseurl", "request wrapper", "http"],
+        "expansion": "API 与请求处理 请求封装 baseURL proxy response envelope error handling interceptor",
+    },
+    {
+        "id": "business_api",
+        "position": 6,
+        "terms": ["业务接口", "业务 api", "api 模块", "接口模块", "新接口", "分页", "crud", "services", "service"],
+        "expansion": "业务 API 模块 services 业务接口 endpoint 前缀 CRUD 分页",
+    },
+    {
+        "id": "maintenance",
+        "position": 7,
+        "terms": ["维护", "注意", "约定", "常见坑", "不要手改", "生成代码", "agents", "claude", "skill"],
+        "expansion": "项目技能与维护约定 AGENTS CLAUDE skills 生成代码边界 commit lint test 常见维护注意事项",
+    },
+    {
+        "id": "environment",
+        "position": 8,
+        "terms": [
+            "环境",
+            "接口地址",
+            "api base url",
+            "api_base_url",
+            "base url",
+            "域名",
+            "envkey",
+            "env.dev",
+            "env.test",
+            "env.prod",
+            "开发",
+            "测试环境",
+            "生产",
+        ],
+        "expansion": "环境配置与常量 接口地址 不同环境请求哪里配 每个环境 api base url API_BASE_URL baseURL env.dev env.test env.prod 域名 envKey",
+    },
+    {
+        "id": "endpoint_index",
+        "position": 9,
+        "terms": ["接口清单", "接口端点", "端点", "endpoint", "接口索引", "文件索引", "method", "path"],
+        "expansion": "接口端点与关键文件索引 endpoint path method source file 页面调用",
+    },
+]
 
 
 def _redact(value: str) -> str:
@@ -232,21 +307,113 @@ def _cmd_create_text_document(args: argparse.Namespace) -> Any:
     return _request_json(args, "POST", f"/datasets/{args.dataset_id}/document/create-by-text", payload=payload)
 
 
+def _infer_project_memory_topic(query: str) -> dict[str, Any] | None:
+    normalized = query.lower()
+    best: tuple[int, int, dict[str, Any] | None] = (0, 0, None)
+    for index, topic in enumerate(PROJECT_MEMORY_TOPICS):
+        score = 0
+        for term in topic["terms"]:
+            term_normalized = str(term).lower()
+            if term_normalized in normalized:
+                score += 3 if len(term_normalized) > 2 else 1
+        if score > best[0]:
+            best = (score, -index, topic)
+    return best[2] if best[0] > 0 else None
+
+
+def _expand_project_memory_query(query: str, project_key: str | None) -> tuple[str, dict[str, Any] | None]:
+    if not project_key:
+        return query, None
+
+    topic = _infer_project_memory_topic(query)
+    if not topic:
+        return query, None
+
+    expansion = str(topic["expansion"])
+    expanded_query = f"{project_key} {query} {expansion}"
+    return " ".join(expanded_query.split()), topic
+
+
+def _apply_weighted_score(payload: dict[str, Any], args: argparse.Namespace) -> None:
+    retrieval_model = payload["retrieval_model"]
+    if args.search_method != "hybrid_search" or args.no_weighted_score:
+        retrieval_model["reranking_enable"] = bool(args.reranking_enable)
+        retrieval_model["reranking_model"] = None
+        retrieval_model["reranking_mode"] = None
+        return
+
+    retrieval_model["reranking_enable"] = True
+    retrieval_model["reranking_model"] = {"reranking_provider_name": "", "reranking_model_name": ""}
+    retrieval_model["reranking_mode"] = "weighted_score"
+    retrieval_model["weights"] = {
+        "vector_setting": {
+            "vector_weight": args.vector_weight,
+            "embedding_provider_name": args.embedding_provider_name,
+            "embedding_model_name": args.embedding_model_name,
+        },
+        "keyword_setting": {"keyword_weight": args.keyword_weight},
+    }
+
+
+def _project_memory_record_score(record: dict[str, Any], topic: dict[str, Any], original_index: int) -> tuple[int, float, int]:
+    segment = record.get("segment") or {}
+    content = str(segment.get("content") or "")
+    position = segment.get("position")
+    boost = 0
+    if position == topic["position"]:
+        boost += 1000
+    if str(topic["expansion"]).split()[0] in content:
+        boost += 20
+    return boost, float(record.get("score") or 0), -original_index
+
+
+def _boost_project_memory_records(response: Any, topic: dict[str, Any] | None) -> Any:
+    if not topic or not isinstance(response, dict):
+        return response
+    records = response.get("records")
+    if not isinstance(records, list) or len(records) < 2:
+        return response
+
+    indexed_records = [(index, record) for index, record in enumerate(records)]
+    indexed_records.sort(
+        key=lambda item: _project_memory_record_score(item[1], topic, item[0]),
+        reverse=True,
+    )
+    response["records"] = [record for _, record in indexed_records]
+    response["client_retrieval"] = {
+        "project_memory_topic": topic["id"],
+        "preferred_segment_position": topic["position"],
+        "client_reranked": True,
+    }
+    return response
+
+
 def _cmd_retrieve(args: argparse.Namespace) -> Any:
+    query, project_memory_topic = _expand_project_memory_query(args.query, args.project_key)
     payload: dict[str, Any] = {
-        "query": args.query,
+        "query": query,
         "retrieval_model": {
             "search_method": args.search_method,
-            "reranking_enable": args.reranking_enable,
-            "reranking_model": None,
-            "reranking_mode": None,
             "top_k": args.top_k,
             "score_threshold_enabled": args.score_threshold is not None,
         },
     }
+    _apply_weighted_score(payload, args)
+    if args.project_key:
+        payload["retrieval_model"]["metadata_filtering_conditions"] = {
+            "logical_operator": "and",
+            "conditions": [
+                {
+                    "name": "project_key",
+                    "comparison_operator": "is",
+                    "value": args.project_key,
+                }
+            ],
+        }
     if args.score_threshold is not None:
         payload["retrieval_model"]["score_threshold"] = args.score_threshold
-    return _request_json(args, "POST", f"/datasets/{args.dataset_id}/retrieve", payload=payload)
+    response = _request_json(args, "POST", f"/datasets/{args.dataset_id}/retrieve", payload=payload)
+    return _boost_project_memory_records(response, project_memory_topic)
 
 
 def _cmd_upload_file(args: argparse.Namespace) -> Any:
@@ -344,8 +511,26 @@ def _build_parser() -> argparse.ArgumentParser:
     retrieve = sub.add_parser("retrieve", help="Run retrieval against a knowledge base.")
     retrieve.add_argument("dataset_id")
     retrieve.add_argument("query")
-    retrieve.add_argument("--top-k", type=int, default=3)
-    retrieve.add_argument("--search-method", default="keyword_search")
+    retrieve.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
+    retrieve.add_argument(
+        "--search-method",
+        choices=("hybrid_search", "semantic_search", "full_text_search", "keyword_search"),
+        default=DEFAULT_SEARCH_METHOD,
+    )
+    retrieve.add_argument(
+        "--no-weighted-score",
+        action="store_true",
+        help="Disable weighted-score hybrid retrieval. Useful for raw Dify debugging.",
+    )
+    retrieve.add_argument("--vector-weight", type=float, default=0.5)
+    retrieve.add_argument("--keyword-weight", type=float, default=0.5)
+    retrieve.add_argument("--embedding-provider-name", default=DEFAULT_EMBEDDING_PROVIDER)
+    retrieve.add_argument("--embedding-model-name", default=DEFAULT_EMBEDDING_MODEL)
+    retrieve.add_argument(
+        "--project-key",
+        default=None,
+        help="Filter retrieval results to documents tagged with doc_metadata.project_key.",
+    )
     retrieve.add_argument("--reranking-enable", action="store_true")
     retrieve.add_argument("--score-threshold", type=float, default=None)
     retrieve.set_defaults(func=_cmd_retrieve)
