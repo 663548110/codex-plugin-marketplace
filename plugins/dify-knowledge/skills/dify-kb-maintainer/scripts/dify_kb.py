@@ -24,20 +24,33 @@ PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
     {
         "id": "project",
         "position": 1,
-        "intent_signals": ["是什么项目", "项目是干嘛", "项目干嘛", "项目定位", "业务范围", "技术栈", "从哪看", "入口"],
-        "expansion": "项目定位 技术栈 运行形态 重要入口 主要业务模块 项目卡",
+        "intent_signals": [
+            "主要技术栈",
+            "项目入口",
+            "入口文件",
+            "是什么项目",
+            "项目是干嘛",
+            "项目干嘛",
+            "项目定位",
+            "业务范围",
+            "技术栈",
+            "从哪看",
+            "新人接手",
+            "先看什么",
+        ],
+        "expansion": "项目定位 技术栈 项目入口 入口文件 运行形态 重要入口 主要业务模块 项目卡",
     },
     {
         "id": "startup",
         "position": 2,
-        "intent_signals": ["启动", "跑起来", "本地", "安装", "构建", "测试", "lint", "typecheck", "dev server", "build"],
+        "intent_signals": ["启动", "跑起来", "跑通", "本地", "安装", "构建", "测试", "lint", "typecheck", "dev server", "build", "改完代码跑什么检查"],
         "expansion": "启动构建测试 install dev build test lint typecheck 端口",
     },
     {
         "id": "auth",
         "position": 3,
-        "intent_signals": ["登录", "权限", "token", "currentuser", "用户信息", "菜单权限", "按钮权限", "auth", "permission", "access"],
-        "expansion": "权限与登录 login token currentUser auth storage route permission button permission",
+        "intent_signals": ["登录", "登录页面", "登录流程", "权限", "token", "currentuser", "用户信息", "菜单权限", "按钮权限", "auth", "permission", "access"],
+        "expansion": "权限与登录 登录页面 登录流程 login token currentUser auth storage route permission button permission",
     },
     {
         "id": "routes",
@@ -56,6 +69,8 @@ PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
             "返回报错",
             "统一处理",
             "错误处理",
+            "接口报错",
+            "后端报错",
             "错误码",
             "状态码",
             "401",
@@ -80,7 +95,7 @@ PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
     {
         "id": "maintenance",
         "position": 7,
-        "intent_signals": ["维护", "注意", "约定", "常见坑", "不要手改", "生成代码", "复核", "改路由", "改接口", "agents", "claude", "skill"],
+        "intent_signals": ["维护", "注意", "约定", "常见坑", "不要手改", "生成代码", "复核", "改路由", "改接口", "pr", "知识库", "agents", "claude", "skill"],
         "expansion": "项目技能与维护约定 AGENTS CLAUDE skills 生成代码边界 commit lint test 常见维护注意事项 改路由后要做什么 改接口后要复核什么",
     },
     {
@@ -113,7 +128,7 @@ PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
     {
         "id": "endpoint_index",
         "position": 9,
-        "intent_signals": ["某个接口", "接口在哪", "接口清单", "接口端点", "接口名", "反查", "哪个页面调用", "端点", "endpoint", "接口索引", "文件索引", "method", "path", "调用链"],
+        "intent_signals": ["某个接口", "接口在哪", "接口清单", "接口端点", "接口名", "反查", "接口路径", "只知道接口路径", "哪个页面调用", "端点", "endpoint", "接口索引", "文件索引", "method", "path", "调用链"],
         "expansion": "接口端点与关键文件索引 某个接口在哪 接口名反查 endpoint path method source file 页面调用 调用链",
     },
 ]
@@ -426,6 +441,8 @@ def _boost_project_memory_records(response: Any, topic: dict[str, Any] | None) -
     if not isinstance(records, list) or len(records) < 2:
         return response
 
+    raw_top_positions = [record.get("segment", {}).get("position") for record in records[:10]]
+    raw_top_scores = [record.get("score") for record in records[:10]]
     indexed_records = [(index, record) for index, record in enumerate(records)]
     indexed_records.sort(
         key=lambda item: _project_memory_record_score(item[1], topic, item[0]),
@@ -436,6 +453,8 @@ def _boost_project_memory_records(response: Any, topic: dict[str, Any] | None) -
         "project_memory_topic": topic["id"],
         "preferred_segment_position": topic["position"],
         "client_reranked": True,
+        "raw_top_positions": raw_top_positions,
+        "raw_top_scores": raw_top_scores,
     }
     return response
 
