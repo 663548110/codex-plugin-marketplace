@@ -1,6 +1,6 @@
 {
   "name": "dify-knowledge",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Use Dify Knowledge Base Service API from Codex with a bundled skill and CLI helper.",
   "author": {
     "name": "HuanlongAI",
@@ -34,9 +34,9 @@
     "privacyPolicyURL": "https://github.com/663548110/codex-plugin-marketplace",
     "termsOfServiceURL": "https://github.com/663548110/codex-plugin-marketplace",
     "defaultPrompt": [
-      "用 Dify 知识库检索项目上下文。",
-      "把这段项目资料写入 Dify 知识库。",
-      "测试 Dify 知识库召回是否命中正确内容。"
+      "用 Dify Agent 项目工作记忆库检索项目上下文。",
+      "先用 Dify 召回项目入口、环境、权限、路由和 API 线索，再决定是否查看源码。",
+      "测试 Dify 项目工作记忆库的模糊召回质量。"
     ],
     "brandColor": "#155EEF",
     "composerIcon": "./assets/dify-logo.png",
