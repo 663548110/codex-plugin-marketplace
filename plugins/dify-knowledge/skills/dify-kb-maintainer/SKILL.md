@@ -1,6 +1,6 @@
 ---
 name: dify-kb-maintainer
-description: Use Dify Knowledge from Codex for project context retrieval and knowledge-base maintenance. Use when the task mentions Dify knowledge bases, Agent 项目工作记忆库, project memory, apps-base, staff-app, datasets, documents, chunks, retrieval tests, pipelines, API keys, or local Dify stack operations.
+description: Use Dify Knowledge from Codex for project context retrieval and knowledge-base maintenance. Use when the task mentions Dify knowledge bases, Agent 项目工作记忆库, project memory, project_key, datasets, documents, chunks, retrieval tests, pipelines, API keys, or local Dify stack operations.
 ---
 
 # Dify KB Maintainer
@@ -22,7 +22,7 @@ The primary project-memory knowledge base is:
 - Knowledge base: `Agent 项目工作记忆库`
 - Dataset ID: `0c7535e8-128d-4d1a-9a66-15b1cad4d3da`
 - Purpose: long-term working memory for Codex/agents, not a full source-code mirror.
-- Reliable project keys currently expected: `apps-base`, `staff-app`. Treat other projects as unknown until `list-documents` confirms they are present and indexed.
+- Reliable projects are the completed, enabled documents that have `doc_metadata.project_key`. Treat a project as unknown until `list-documents` or retrieval results confirm it is present and indexed.
 
 This knowledge base is optimized for project-level recall. It should answer:
 
@@ -73,7 +73,7 @@ Read `references/local-stack.md` when starting or checking a local Docker Compos
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py list-documents <dataset_id>
    python3 skills/dify-kb-maintainer/scripts/dify_kb.py retrieve <dataset_id> "query"
    ```
-3. For project-context questions, use natural queries that include the `project_key`, for example `staff-app 本地怎么跑起来` or `apps-base 接口封装在哪里`. Avoid overfitting recall tests with too many exact table/field names unless debugging a specific miss.
+3. For project-context questions, use natural queries that include the intended `project_key`, for example `<project_key> 本地怎么跑起来` or `<project_key> 接口封装在哪里`. Avoid overfitting recall tests with too many exact table/field names unless debugging a specific miss.
 4. Inspect returned records before answering: document name, segment position, content, score if present, and whether the content contains the intended project key.
 5. In answers, state which project/card/segment the answer came from. If recall is weak, mixed across projects, stale, or missing, say so and either retry with a better query or verify in source code.
 6. If running from outside this skill folder, use the absolute script path from the installed plugin cache or repository checkout.
