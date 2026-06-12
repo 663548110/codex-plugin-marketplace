@@ -19,6 +19,8 @@ DEFAULT_SEARCH_METHOD = "hybrid_search"
 DEFAULT_TOP_K = 12
 DEFAULT_EMBEDDING_PROVIDER = "langgenius/openai/openai"
 DEFAULT_EMBEDDING_MODEL = "text-embedding-3-large"
+DEFAULT_RERANKING_PROVIDER = os.environ.get("DIFY_RERANK_PROVIDER", "langgenius/voyage/voyage")
+DEFAULT_RERANKING_MODEL = os.environ.get("DIFY_RERANK_MODEL", "rerank-2.5")
 
 PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = [
     {
@@ -405,13 +407,27 @@ def _apply_weighted_score(payload: dict[str, Any], args: argparse.Namespace) -> 
     retrieval_model = payload["retrieval_model"]
     if args.search_method != "hybrid_search" or args.no_weighted_score:
         retrieval_model["reranking_enable"] = bool(args.reranking_enable)
-        retrieval_model["reranking_model"] = None
-        retrieval_model["reranking_mode"] = None
+        retrieval_model["reranking_model"] = (
+            {
+                "reranking_provider_name": args.reranking_provider_name,
+                "reranking_model_name": args.reranking_model_name,
+            }
+            if args.reranking_enable and args.reranking_provider_name and args.reranking_model_name
+            else None
+        )
+        retrieval_model["reranking_mode"] = "reranking_model" if retrieval_model["reranking_model"] else None
         return
 
     retrieval_model["reranking_enable"] = True
-    retrieval_model["reranking_model"] = {"reranking_provider_name": "", "reranking_model_name": ""}
-    retrieval_model["reranking_mode"] = "weighted_score"
+    if args.reranking_provider_name and args.reranking_model_name:
+        retrieval_model["reranking_model"] = {
+            "reranking_provider_name": args.reranking_provider_name,
+            "reranking_model_name": args.reranking_model_name,
+        }
+        retrieval_model["reranking_mode"] = "reranking_model"
+    else:
+        retrieval_model["reranking_model"] = {"reranking_provider_name": "", "reranking_model_name": ""}
+        retrieval_model["reranking_mode"] = "weighted_score"
     retrieval_model["weights"] = {
         "vector_setting": {
             "vector_weight": args.vector_weight,
@@ -484,6 +500,16 @@ def _cmd_retrieve(args: argparse.Namespace) -> Any:
     if args.score_threshold is not None:
         payload["retrieval_model"]["score_threshold"] = args.score_threshold
     response = _request_json(args, "POST", f"/datasets/{args.dataset_id}/retrieve", payload=payload)
+    if (
+        payload["retrieval_model"].get("reranking_mode") == "reranking_model"
+        and isinstance(response, dict)
+        and not response.get("records")
+    ):
+        fallback_payload = json.loads(json.dumps(payload))
+        fallback_model = fallback_payload["retrieval_model"]
+        fallback_model["reranking_model"] = {"reranking_provider_name": "", "reranking_model_name": ""}
+        fallback_model["reranking_mode"] = "weighted_score"
+        response = _request_json(args, "POST", f"/datasets/{args.dataset_id}/retrieve", payload=fallback_payload)
     return _boost_project_memory_records(response, project_memory_topic)
 
 
@@ -597,6 +623,8 @@ def _build_parser() -> argparse.ArgumentParser:
     retrieve.add_argument("--keyword-weight", type=float, default=0.5)
     retrieve.add_argument("--embedding-provider-name", default=DEFAULT_EMBEDDING_PROVIDER)
     retrieve.add_argument("--embedding-model-name", default=DEFAULT_EMBEDDING_MODEL)
+    retrieve.add_argument("--reranking-provider-name", default=DEFAULT_RERANKING_PROVIDER)
+    retrieve.add_argument("--reranking-model-name", default=DEFAULT_RERANKING_MODEL)
     retrieve.add_argument(
         "--project-key",
         default=None,
