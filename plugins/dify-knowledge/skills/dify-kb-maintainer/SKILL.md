@@ -9,7 +9,7 @@ Use this skill for Dify Knowledge Base tasks from Codex.
 
 ## When To Use
 
-- Use this skill before opening source files when the user asks for project orientation, likely entry points, startup/build/test commands, environment/API base URLs, auth/permissions, routes/modules, request wrappers, business API modules, or maintenance conventions for an already-ingested project.
+- Use this skill before opening source files when the user asks for project orientation, repository structure, likely entry points, startup/build/test commands, environment/API base URLs, auth/permissions, routes/modules, request wrappers, business API modules, or maintenance conventions for an already-ingested project.
 - Use it when the user asks Codex to "use Dify", "use the knowledge base", "retrieve project context", "test recall", "validate hit quality", or maintain Dify datasets/documents/chunks/pipelines.
 - Use it for Dify local stack checks, Service API calls, metadata/document/indexing repair, and knowledge pipeline troubleshooting.
 - Do not use it as the only authority for code-changing work. Treat recall as a map of where to look first, then verify against the repo when exact current implementation, line numbers, or behavior matters.
@@ -27,6 +27,7 @@ The primary project-memory knowledge base is:
 This knowledge base is optimized for project-level recall. It should answer:
 
 - what the project is and what business areas it covers
+- how the repository is structured, which top-level directories or subprojects matter, and where to start reading
 - how to start, build, test, or lint it
 - where environment constants and API base URLs live
 - how login, token handling, company/shop selection, and permissions are wired
@@ -34,17 +35,18 @@ This knowledge base is optimized for project-level recall. It should answer:
 - where request wrappers, API source files, and business API modules are
 - what maintenance rules, generated-file boundaries, and common pitfalls matter
 
-Each healthy project document should be a parent-child high-quality document with 9 parent cards:
+Each healthy project document should be a parent-child high-quality document with 10 parent cards:
 
 1. `项目卡：<project_key>`
-2. `专题卡：<project_key> 启动构建测试`
-3. `专题卡：<project_key> 权限与登录`
-4. `专题卡：<project_key> 路由与业务模块`
-5. `专题卡：<project_key> HTTP 客户端与响应处理`
-6. `专题卡：<project_key> 业务 API 模块`
-7. `专题卡：<project_key> 项目技能与维护约定`
-8. `专题卡：<project_key> 环境配置与接口域名`
-9. `专题卡：<project_key> 接口端点与关键文件索引`
+2. `专题卡：<project_key> 仓库总览`
+3. `专题卡：<project_key> 启动构建测试`
+4. `专题卡：<project_key> 权限与登录`
+5. `专题卡：<project_key> 路由与业务模块`
+6. `专题卡：<project_key> HTTP 客户端与响应处理`
+7. `专题卡：<project_key> 业务 API 模块`
+8. `专题卡：<project_key> 项目技能与维护约定`
+9. `专题卡：<project_key> 环境配置与接口域名`
+10. `专题卡：<project_key> 接口端点与关键文件索引`
 
 Healthy documents should carry `doc_metadata.project_key`. When metadata filtering is unavailable in the helper command, include the project key in the query and verify the returned document/segment belongs to the intended project.
 
@@ -77,14 +79,14 @@ Read `references/local-stack.md` when starting or checking a local Docker Compos
 3. The helper defaults to `hybrid_search` with `top_k=12`, the configured rerank model, and a weighted-score fallback if rerank returns no candidates. Use `--search-method keyword_search` only for economy-index smoke tests, and `--no-weighted-score` only for raw retrieval debugging.
 4. For project-context questions, use natural queries and pass `--project-key <project_key>` whenever document metadata is available. The helper will filter by `doc_metadata.project_key`, expand the query with the matching project-memory card specification, and client-rerank the returned cards so similar projects and adjacent topics do not compete. Treat this as the expected Codex consumption path.
    - The project-memory card routing specification is loaded from `data/project_memory_cards.json`, which is generated from the Codeup project-memory schema. Do not hand-edit a second Python topic list.
-5. Good recall prompts should stay natural, for example `本地怎么跑起来`, `接口封装在哪里`, or `每个环境的接口地址是什么`. Avoid overfitting recall tests with too many exact table/field names unless debugging a specific miss.
+5. Good recall prompts should stay natural, for example `这个仓库大概什么结构`, `本地怎么跑起来`, `接口封装在哪里`, or `每个环境的接口地址是什么`. Avoid overfitting recall tests with too many exact table/field names unless debugging a specific miss.
 6. Inspect returned records before answering: document name, segment position, content, score if present, and whether the content contains the intended project key.
 7. In answers, state which project/card/segment the answer came from. If recall is weak, mixed across projects, stale, or missing, say so and either retry with a better query or verify in source code.
 8. If running from outside this skill folder, use the absolute script path from the installed plugin cache or repository checkout.
 
 ## Maintenance Workflow
 
-- For document health, check: completed/enabled document, `doc_metadata.project_key`, 9 parent segments, no `---CARD---` delimiter leaks, and retrieval hits for the major project topics above.
+- For document health, check: completed/enabled document, `doc_metadata.project_key`, 10 parent segments, no `---CARD---` delimiter leaks, and retrieval hits for the major project topics above.
 - Treat client-side project-card reranking as a consumption safeguard, not the source of truth. Long-term quality should come from schema-driven project cards that include `检索锚点` and `本卡回答范围` in each parent segment.
 - For Dify workflow/pipeline repair, prefer Service API and UI operations first. Avoid direct database edits unless the user explicitly asks for database-level repair or there is no safer route.
 - For the first API key or key replacement, use the Dify browser UI rather than direct database edits.
