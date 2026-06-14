@@ -1,7 +1,7 @@
 {
   "name": "dify-knowledge",
-  "version": "0.1.12",
-  "description": "Use Dify Knowledge Base Service API from Codex with a bundled skill and CLI helper.",
+  "version": "0.1.13",
+  "description": "在 Codex 中使用 Dify 知识库 Service API，并内置维护技能与命令行助手。",
   "author": {
     "name": "HuanlongAI",
     "email": "663548110@qq.com",
@@ -21,8 +21,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Dify Knowledge",
-    "shortDescription": "Use Dify knowledge bases from Codex",
-    "longDescription": "Dify Knowledge bundles a Codex skill and a Python helper for Dify Knowledge Service API workflows: list datasets, create knowledge bases, create text documents, inspect indexing status, upload files, and run retrieval tests without changing Dify source code.",
+    "shortDescription": "在 Codex 中使用 Dify 知识库",
+    "longDescription": "Dify Knowledge 内置 Codex 技能和 Python 命令行助手，用于通过 Dify Knowledge Service API 管理知识库流程：查看数据集、创建知识库、写入文本文档、检查索引状态、上传文件、执行召回测试，并尽量不修改 Dify 项目源码。",
     "developerName": "HuanlongAI",
     "category": "Productivity",
     "capabilities": [
