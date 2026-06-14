@@ -422,21 +422,22 @@ def _boost_project_memory_records(response: Any, topic: dict[str, Any] | None) -
     if not topic or not isinstance(response, dict):
         return response
     records = response.get("records")
-    if not isinstance(records, list) or len(records) < 2:
+    if not isinstance(records, list):
         return response
 
     raw_top_positions = [record.get("segment", {}).get("position") for record in records[:10]]
     raw_top_scores = [record.get("score") for record in records[:10]]
-    indexed_records = [(index, record) for index, record in enumerate(records)]
-    indexed_records.sort(
-        key=lambda item: _project_memory_record_score(item[1], topic, item[0]),
-        reverse=True,
-    )
-    response["records"] = [record for _, record in indexed_records]
+    if len(records) >= 2:
+        indexed_records = [(index, record) for index, record in enumerate(records)]
+        indexed_records.sort(
+            key=lambda item: _project_memory_record_score(item[1], topic, item[0]),
+            reverse=True,
+        )
+        response["records"] = [record for _, record in indexed_records]
     response["client_retrieval"] = {
         "project_memory_topic": topic["id"],
         "preferred_segment_position": topic["position"],
-        "client_reranked": True,
+        "client_reranked": len(records) >= 2,
         "raw_top_positions": raw_top_positions,
         "raw_top_scores": raw_top_scores,
     }
