@@ -24,9 +24,10 @@ DEFAULT_RERANKING_MODEL = os.environ.get("DIFY_RERANK_MODEL", "rerank-2.5")
 MAX_DIFY_QUERY_LENGTH = 240
 
 PROJECT_MEMORY_SCHEMA_PATH = Path(__file__).resolve().parent.parent / "data" / "project_memory_cards.json"
+KNOWLEDGE_OVERVIEW_PROJECT_KEY = "__knowledge_overview__"
 
 
-def _load_project_memory_card_specs() -> list[dict[str, Any]]:
+def _load_project_memory_schema() -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
     try:
         payload = json.loads(PROJECT_MEMORY_SCHEMA_PATH.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -37,10 +38,11 @@ def _load_project_memory_card_specs() -> list[dict[str, Any]]:
     cards = payload.get("cards")
     if not isinstance(cards, list):
         raise SystemExit(f"Invalid project memory schema: {PROJECT_MEMORY_SCHEMA_PATH}: cards must be a list")
-    return [card for card in cards if isinstance(card, dict)]
+    overview = payload.get("knowledge_overview")
+    return overview if isinstance(overview, dict) else None, [card for card in cards if isinstance(card, dict)]
 
 
-PROJECT_MEMORY_CARD_SPECS: list[dict[str, Any]] = _load_project_memory_card_specs()
+KNOWLEDGE_OVERVIEW_SPEC, PROJECT_MEMORY_CARD_SPECS = _load_project_memory_schema()
 
 
 def _redact(value: str) -> str:
@@ -278,6 +280,37 @@ def _infer_project_memory_topic(query: str) -> dict[str, Any] | None:
     return best[2] if best[0] > 0 else None
 
 
+def _infer_knowledge_overview_topic(query: str) -> dict[str, Any] | None:
+    if not KNOWLEDGE_OVERVIEW_SPEC:
+        return None
+
+    normalized = query.lower()
+    global_phrases = (
+        "知识库",
+        "有哪些项目",
+        "有哪些仓库",
+        "项目列表",
+        "仓库列表",
+        "项目索引",
+        "项目之间",
+        "仓库之间",
+        "这些项目",
+        "这些仓库",
+        "跨仓库",
+        "关联仓库",
+        "先查哪个",
+        "应该先查",
+        "涉及哪些仓库",
+        "涉及哪些项目",
+    )
+    relation_phrases = ("关系", "关联", "依赖", "边界", "负责")
+    if any(phrase in normalized for phrase in global_phrases):
+        return KNOWLEDGE_OVERVIEW_SPEC
+    if ("项目" in normalized or "仓库" in normalized) and any(phrase in normalized for phrase in relation_phrases):
+        return KNOWLEDGE_OVERVIEW_SPEC
+    return None
+
+
 def _project_memory_card_spec(card_id: str) -> dict[str, Any] | None:
     return next((spec for spec in PROJECT_MEMORY_CARD_SPECS if spec["id"] == card_id), None)
 
@@ -298,8 +331,31 @@ def _looks_like_endpoint_index_query(normalized_query: str) -> bool:
 
 
 def _expand_project_memory_query(query: str, project_key: str | None) -> tuple[str, dict[str, Any] | None]:
+    if project_key == KNOWLEDGE_OVERVIEW_PROJECT_KEY:
+        topic = KNOWLEDGE_OVERVIEW_SPEC
+        if not topic:
+            return query, None
+        expansion = str(topic["expansion"])
+        parts = [query]
+        for token in expansion.split():
+            candidate = " ".join([*parts, token]).strip()
+            if len(candidate) > MAX_DIFY_QUERY_LENGTH:
+                break
+            parts.append(token)
+        return " ".join(" ".join(parts).split()), topic
+
     if not project_key:
-        return query, None
+        topic = _infer_knowledge_overview_topic(query)
+        if not topic:
+            return query, None
+        expansion = str(topic["expansion"])
+        parts = [query]
+        for token in expansion.split():
+            candidate = " ".join([*parts, token]).strip()
+            if len(candidate) > MAX_DIFY_QUERY_LENGTH:
+                break
+            parts.append(token)
+        return " ".join(" ".join(parts).split()), topic
 
     topic = _infer_project_memory_topic(query)
     if not topic:
@@ -398,14 +454,17 @@ def _cmd_retrieve(args: argparse.Namespace) -> Any:
         },
     }
     _apply_weighted_score(payload, args)
-    if args.project_key:
+    metadata_project_key = args.project_key
+    if not metadata_project_key and project_memory_topic and project_memory_topic.get("id") == "knowledge_overview":
+        metadata_project_key = KNOWLEDGE_OVERVIEW_PROJECT_KEY
+    if metadata_project_key:
         payload["retrieval_model"]["metadata_filtering_conditions"] = {
             "logical_operator": "and",
             "conditions": [
                 {
                     "name": "project_key",
                     "comparison_operator": "is",
-                    "value": args.project_key,
+                    "value": metadata_project_key,
                 }
             ],
         }

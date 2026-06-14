@@ -1,6 +1,6 @@
 {
   "name": "dify-knowledge",
-  "version": "0.1.14",
+  "version": "0.1.16",
   "description": "在 Codex 中使用 Dify 知识库 Service API，并内置维护技能与命令行助手。",
   "author": {
     "name": "HuanlongAI",
@@ -35,6 +35,7 @@
     "termsOfServiceURL": "https://github.com/663548110/codex-plugin-marketplace",
     "defaultPrompt": [
       "用 Dify Agent 项目工作记忆库检索项目上下文。",
+      "用 Dify 知识库总览卡判断有哪些项目、仓库关系和应该先查哪个项目。",
       "先用 Dify 召回项目入口、环境、权限、路由和 API 线索，再决定是否查看源码。",
       "测试 Dify 项目工作记忆库的模糊召回质量。"
     ],

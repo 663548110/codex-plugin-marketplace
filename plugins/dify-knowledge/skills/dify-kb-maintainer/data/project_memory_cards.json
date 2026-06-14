@@ -1,75 +1,91 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "knowledge_overview": {
+    "id": "knowledge_overview",
+    "position": 1,
+    "project_key": "__knowledge_overview__",
+    "label": "知识库总览与仓库关系",
+    "title": "知识库总览：Agent 项目工作记忆库",
+    "intent_signals": [
+      "这个知识库有哪些项目",
+      "知识库里有哪些项目",
+      "项目之间什么关系",
+      "仓库之间什么关系",
+      "这些仓库怎么关联",
+      "哪个项目依赖哪个项目",
+      "应该先查哪个项目",
+      "项目索引",
+      "仓库关系",
+      "项目关系",
+      "知识库总览",
+      "项目总览",
+      "仓库总览",
+      "项目列表",
+      "仓库列表",
+      "跨仓库",
+      "关联仓库"
+    ],
+    "expansion": "知识库总览 项目索引 仓库关系 项目关系 项目列表 仓库列表 跨仓库 关联仓库 哪些项目 哪些仓库 应该先查哪个项目 这些仓库怎么关联"
+  },
   "cards": [
     {
       "id": "project",
       "position": 1,
-      "label": "项目定位与全局入口",
+      "label": "项目定位、仓库结构与全局入口",
       "title": "项目卡：{project_key}",
       "intent_signals": [
         "主要技术栈和项目入口是什么",
         "我第一次接手应该从哪里看",
+        "这个仓库大概是什么结构",
+        "仓库里有哪些目录和模块",
         "主要技术栈和入口是什么",
+        "subpackages",
+        "这个仓库大概什么结构",
         "看这个项目从哪里开始",
         "主要技术栈和项目入口",
-        "项目定位与全局入口",
         "这个项目是干什么的",
-        "主要技术栈和入口",
-        "项目入口在哪",
-        "新人先看什么",
-        "从哪里开始看",
-        "是什么项目",
-        "全局关键词",
-        "项目定位",
-        "项目入口",
-        "干什么用",
-        "入口文件",
-        "给谁用",
-        "技术栈"
-      ],
-      "expansion": "项目定位与全局入口 主要技术栈和项目入口是什么 看这个项目从哪里开始 项目定位 技术栈 项目入口 入口文件 全局关键词 是什么项目 干什么用 给谁用 从哪里开始看 新人先看什么"
-    },
-    {
-      "id": "repository_overview",
-      "position": 2,
-      "label": "仓库总览",
-      "title": "专题卡：{project_key} 仓库总览",
-      "intent_signals": [
-        "这个仓库有哪些子项目或子包",
-        "这个仓库大概是什么结构",
-        "哪些文件被扫描进知识库",
-        "仓库里有哪些目录和模块",
-        "subpackages",
         "我应该先看哪些目录",
+        "仓库结构与全局入口",
         "workspace",
+        "主要技术栈和入口",
         "packages",
         "monorepo",
         "package",
+        "项目入口在哪",
+        "新人先看什么",
         "先看哪些目录",
         "仓库里有什么",
+        "从哪里开始看",
+        "是什么项目",
+        "全局关键词",
         "pages",
+        "项目定位",
+        "项目入口",
         "顶层目录",
         "跳过文件",
         "目录结构",
         "模块分布",
         "文件分布",
         "扫描覆盖",
+        "干什么用",
         "哪些目录",
+        "入口文件",
         "代码分布",
         "仓库结构",
         "仓库目录",
-        "仓库总览",
         "apps",
+        "给谁用",
+        "技术栈",
         "子项目",
         "子目录",
         "src",
         "子包"
       ],
-      "expansion": "仓库总览 仓库总览 仓库结构 仓库目录 目录结构 顶层目录 子项目 子目录 子包 monorepo workspace package packages apps src pages subpackages 文件分布 模块分布 代码分布 扫描覆盖 跳过文件 哪些目录 先看哪些目录 仓库里有什么"
+      "expansion": "项目定位、仓库结构与全局入口 主要技术栈和项目入口是什么 这个仓库大概什么结构 看这个项目从哪里开始 项目定位 技术栈 项目入口 入口文件 仓库结构 仓库目录 目录结构 顶层目录 子项目 子目录 子包 monorepo workspace package packages apps src pages subpackages 文件分布 模块分布 代码分布 扫描覆盖 跳过文件 哪些目录 先看哪些目录 仓库里有什么 全局关键词 是什么项目 干什么用 给谁用 从哪里开始看 新人先看什么"
     },
     {
       "id": "startup",
-      "position": 3,
+      "position": 2,
       "label": "启动构建测试",
       "title": "专题卡：{project_key} 启动构建测试",
       "intent_signals": [
@@ -97,7 +113,7 @@
     },
     {
       "id": "auth",
-      "position": 4,
+      "position": 3,
       "label": "权限与登录",
       "title": "专题卡：{project_key} 权限与登录",
       "intent_signals": [
@@ -129,7 +145,7 @@
     },
     {
       "id": "routes",
-      "position": 5,
+      "position": 4,
       "label": "路由与业务模块",
       "title": "专题卡：{project_key} 路由与业务模块",
       "intent_signals": [
@@ -164,7 +180,7 @@
     },
     {
       "id": "request",
-      "position": 6,
+      "position": 5,
       "label": "HTTP 客户端与响应处理",
       "title": "专题卡：{project_key} HTTP 客户端与响应处理",
       "intent_signals": [
@@ -202,7 +218,7 @@
     },
     {
       "id": "business_api",
-      "position": 7,
+      "position": 6,
       "label": "业务 API 模块",
       "title": "专题卡：{project_key} 业务 API 模块",
       "intent_signals": [
@@ -229,7 +245,7 @@
     },
     {
       "id": "maintenance",
-      "position": 8,
+      "position": 7,
       "label": "项目技能与维护约定",
       "title": "专题卡：{project_key} 项目技能与维护约定",
       "intent_signals": [
@@ -262,7 +278,7 @@
     },
     {
       "id": "environment",
-      "position": 9,
+      "position": 8,
       "label": "环境配置与接口域名",
       "title": "专题卡：{project_key} 环境配置与接口域名",
       "intent_signals": [
@@ -318,7 +334,7 @@
     },
     {
       "id": "endpoint_index",
-      "position": 10,
+      "position": 9,
       "label": "接口端点与关键文件索引",
       "title": "专题卡：{project_key} 接口端点与关键文件索引",
       "intent_signals": [
